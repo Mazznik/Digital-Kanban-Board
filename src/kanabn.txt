@@ -1,0 +1,312 @@
+import React, { useState, useEffect} from 'react';
+import './App.css';
+import axios from 'axios'; // Uvozimo Axios za slanje HTTP zahtjeva
+
+function App() {
+  const [toDos, setToDos] = useState([]);
+  const [inProgress, setInProgress] = useState([]);
+  const [done, setDone] = useState([]);
+  const [showInput, setShowInput] = useState(false);
+  const [newToDo, setNewToDo] = useState("");
+
+  const handleButtonClick = () => {
+    setShowInput(true);
+  };
+
+  const handleToDo = (event) => {
+    setNewToDo(event.target.value);
+  };
+
+  const handleInputSubmit = () => {
+    if(newToDo.trim() !== ""){
+      setToDos([...toDos, newToDo]);
+      setNewToDo("");
+      setShowInput(false);
+    }
+  };
+
+  const handleDragStart = (event, item) => {
+    event.dataTransfer.setData("text/plain", item)
+  }; 
+  
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = (event, column) => {
+    event.preventDefault();
+    const item = event.dataTransfer.getData("text/plain");
+    switch (column) {
+      case "toDos":
+        if (!toDos.includes(item)) {
+          setToDos([...toDos, item]);
+        }
+        setInProgress(inProgress.filter(todo => todo !== item));
+        setDone(done.filter(todo => todo !== item));
+        break;
+      case "inProgress":
+        if (!inProgress.includes(item)) {
+          setInProgress([...inProgress, item]);
+        }
+        setToDos(toDos.filter(todo => todo !== item));
+        setDone(done.filter(todo => todo !== item));
+        break;
+      case "done":
+        if (!done.includes(item)) {
+          setDone([...done, item]);
+        }
+        setToDos(toDos.filter(todo => todo !== item));
+        setInProgress(inProgress.filter(todo => todo !== item));
+        break;
+      default:
+        break;
+    }
+  };
+
+  return(
+    <div className='app'>
+      <div className='column'>
+        <h2>To Do</h2>
+        <div className='toDo'
+        onDragOver={(event) => handleDragOver(event)}
+        onDrop={(event) => handleDrop(event, "toDos")}>
+          <button id="button-plus" onClick={handleButtonClick}>+</button>
+          {showInput && (
+            <div className='modal'>
+              <div className='modal-content'>
+                <textarea
+                  type='text'
+                  value={newToDo}
+                  onChange={handleToDo}
+                />
+                <button onClick={handleInputSubmit}>Add</button>
+              </div>
+            </div>)}
+          {toDos.map((item, index) => (
+            <li
+              key={index}
+              draggable
+              onDragStart={(event) => handleDragStart(event, item)}
+              style={{marginTop: 30, marginLeft: 10}}
+            >
+              {item}
+            </li>
+          ))}
+        </div>
+      </div>
+
+      <div className='column'>
+        <h2>In Progress</h2>
+        <div className='inProgress' 
+        onDragOver={(event) => handleDragOver(event)}
+        onDrop={(event) => handleDrop(event, "inProgress")}>
+          {inProgress.map((item, index) => (
+            <li
+              key={index}
+              draggable
+              onDragStart={(event) => handleDragStart(event, item)}
+              style={{marginTop: 30, marginLeft: 10}}
+            >
+              {item}
+            </li>
+          ))}
+        </div>
+      </div>
+
+      <div className='column'>
+        <h2>Done</h2>
+        <div className='done'
+        onDragOver={(event) => handleDragOver(event)}
+        onDrop={(event) => handleDrop(event, "done")}>
+          {done.map((item, index) => (
+            <li
+              key={index}
+              draggable
+              onDragStart={(event) => handleDragStart(event, item)}
+              style={{marginTop: 30, marginLeft: 10, color: "green"}}
+            >
+              {item}
+            </li>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+
+
+
+////////////////// KVADRATICI
+
+
+
+import React, { useState } from 'react';
+import './App.css';
+
+function App() {
+  const [toDos, setToDos] = useState([]);
+  const [inProgress, setInProgress] = useState([]);
+  const [done, setDone] = useState([]);
+  const [showInput, setShowInput] = useState(false);
+ 
+  const handleButtonClick = () => {
+    setShowInput(true);
+  };
+
+  const handleInputSubmit = (pickedColor) => {
+      setToDos([...toDos, { color: pickedColor }]); // Dodajemo novi zadatak s odabranom bojom
+      setShowInput(false);
+      pickedColor = null
+    };
+
+  const handleDragStart = (event, column, index) => {
+    event.dataTransfer.setData("text/plain", JSON.stringify({ column, index }));
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = (event, targetColumn) => {
+    event.preventDefault();
+    const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+    const { column, index } = data;
+  
+    // Provjera je li stupac odredišta isti kao i stupac izvora
+    if (column !== targetColumn) {
+      switch (column) {
+        case "toDos":
+          const draggedToDo = toDos[index];
+          setToDos(toDos.filter((_, i) => i !== index));
+          switch (targetColumn) {
+            case "toDos":
+              setToDos([...toDos, draggedToDo]);
+              break;
+            case "inProgress":
+              setInProgress([...inProgress, draggedToDo]);
+              break;
+            case "done":
+              setDone([...done, draggedToDo]);
+              break;
+            default:
+              break;
+          }
+          break;
+        case "inProgress":
+          const draggedInProgress = inProgress[index];
+          setInProgress(inProgress.filter((_, i) => i !== index));
+          switch (targetColumn) {
+            case "toDos":
+              setToDos([...toDos, draggedInProgress]);
+              break;
+            case "inProgress":
+              setInProgress([...inProgress, draggedInProgress]);
+              break;
+            case "done":
+              setDone([...done, draggedInProgress]);
+              break;
+            default:
+              break;
+          }
+          break;
+        case "done":
+          const draggedDone = done[index];
+          setDone(done.filter((_, i) => i !== index));
+          switch (targetColumn) {
+            case "toDos":
+              setToDos([...toDos, draggedDone]);
+              break;
+            case "inProgress":
+              setInProgress([...inProgress, draggedDone]);
+              break;
+            case "done":
+              setDone([...done, draggedDone]);
+              break;
+            default:
+              break;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  };
+     
+
+  return (
+    <div className='app'>
+      <div className='column'>
+        <h2>To Do</h2>
+        <div className='toDo'
+          onDragOver={(event) => handleDragOver(event)}
+          onDrop={(event) => handleDrop(event, "toDos")}>
+          <button id="button-plus" onClick={handleButtonClick}>+</button>
+          {showInput && (
+            <div className='modal'>
+              <div className='modal-content'>
+              <div>
+                <button onClick={() => handleInputSubmit("red")} style={{ backgroundColor: 'red' }}>RED</button>
+                <button onClick={() => handleInputSubmit("blue")} style={{ backgroundColor: 'blue' }}>BLUE</button>
+                <button onClick={() => handleInputSubmit("green")} style={{ backgroundColor: 'green' }}>GREEN</button>
+                {/* Dodajemo gumbove za odabir boje */}
+              </div>
+                {/*<button onClick={handleInputSubmit}>Add</button>*/}
+              </div>
+            </div>
+          )}
+          {toDos.map((_, index) => (
+            <div
+              id='list'
+              key={index}
+              draggable
+              onDragStart={(event) => handleDragStart(event, "toDos", index)}
+              style={{ marginTop: 30, marginLeft: 10, backgroundColor: toDos[index].color, width: '50px', height: '50px', cursor: "pointer"}}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className='column'>
+        <h2>In Progress</h2>
+        <div className='inProgress'
+          onDragOver={(event) => handleDragOver(event)}
+          onDrop={(event) => handleDrop(event, "inProgress")}>
+          {inProgress.map((_, index) => (
+            <div
+              id='list'
+              key={index}
+              draggable
+              onDragStart={(event) => handleDragStart(event, "inProgress", index)}
+              style={{ marginTop: 30, marginLeft: 10, backgroundColor: inProgress[index].color, width: '50px', height: '50px', cursor: "pointer" }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className='column'>
+        <h2>Done</h2>
+        <div className='done'
+          onDragOver={(event) => handleDragOver(event)}
+          onDrop={(event) => handleDrop(event, "done")}>
+          {done.map((_, index) => (
+            <div
+              id='list'
+              key={index}
+              draggable
+              onDragStart={(event) => handleDragStart(event, "done", index)}
+              style={{ marginTop: 30, marginLeft: 10, backgroundColor: done[index].color, width: '50px', height: '50px', cursor: "pointer" }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;

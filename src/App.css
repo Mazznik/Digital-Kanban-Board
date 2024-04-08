@@ -1,38 +1,145 @@
-.App {
-  text-align: center;
+.app {
+  display: flex;
+  justify-content: center; /* Centrira sadržaj vodoravno */
+  align-items: center; /* Centrira sadržaj vertikalno */
+  height: 100vh; /* Opciono: postavlja visinu roditeljskog elementa na visinu preglednika */
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.column {
+  flex: 1;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.inProgress,
+.done {
+  width: 100%; /* Prilagodite širinu po potrebi */
+  height: 500px; /* Prilagodite visinu po potrebi */
+  border: black solid 2px;
+  background-color: lightgray;
+  overflow: auto;
+  flex-wrap: wrap;
+  flex-direction: column; /* Postavljeno u stupac */
+  display: flex;
+}
+
+.toDo{
+  width: 100%; /* Prilagodite širinu po potrebi */
+  height: 500px; /* Prilagodite visinu po potrebi */
+  border: black solid 2px;
+  background-color: lightgray;
+  overflow: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column; /* Postavljeno u stupac */
+  flex-wrap: wrap;
+}
+
+
+#button-plus{
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 5px;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  display: flex;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  align-items: center;
+  z-index: 1000;
 }
 
-.App-link {
-  color: #61dafb;
+.modal-content {
+  background-color: white;
+  padding: 35px;
+  border-radius: 5px;
+  text-align: center;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.colorButton{
+  margin: 5px;
+  width: 90%;
+  height: 40px;
+  font-weight: bold;
+  border: 2px solid black;
+  border-radius: 5px;
+  font-style: italic;
+  text-shadow: white 1px 1px 3px;
+  cursor: pointer;
+}
+
+.colorButton:hover{
+  opacity: 0.9;
+}
+
+#returnButton:hover{
+  opacity: 0.7;
+}
+
+#returnButton{
+  display: block;
+  margin: auto;
+  margin-top: 20px;
+  width: 90%;
+  height: 40px;
+  border-radius: 5px;
+  border: 3px black solid;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: lightgray;
+}
+
+#list{
+  border-top-right-radius: 3px;
+  border-top-left-radius: 15px;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  border: 2px black solid;
+}
+
+/* Stiliziranje tijekom povlačenja */
+#list:active {
+  z-index: 1000; /* Postavljanje z-indexa na visoku vrijednost kako bi se element prikazao iznad drugih */
+  opacity: 0.4; /* Smanjivanje prozirnosti elementa tijekom povlačenja */
+}
+
+#list:hover{
+  border: 3px solid black;
+  opacity: 0.7;
+}
+
+.warning-sign{
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  color: black;
+  font-size: 20px;
+  align-items: center;
+  border: 2px solid black;
+  background-color: red;
+  height: 15px;
+  width: 15px;
+}
+
+.tooLong-sign{
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    color: black;
+    font-size: 20px;
+    align-items: center;
+    border: 2px solid black;
+    background-color: yellow;
+    height: 15px;
+    width: 15px;
 }
