@@ -7,17 +7,30 @@
 
 .column {
   flex: 1;
-  padding: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.inProgress,
-.done {
+h2{
+  background-color: gray;
+  width: 100%;
+  height: 30px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: solid black 4px;
+}
+
+.plan,
+.izrada,
+.test,
+.integriran,
+.gotov {
   width: 100%; /* Prilagodite širinu po potrebi */
   height: 500px; /* Prilagodite visinu po potrebi */
-  border: black solid 2px;
+  border: black solid 4px;
   background-color: lightgray;
   overflow: auto;
   flex-wrap: wrap;
@@ -25,10 +38,10 @@
   display: flex;
 }
 
-.toDo{
+.ideja{
   width: 100%; /* Prilagodite širinu po potrebi */
   height: 500px; /* Prilagodite visinu po potrebi */
-  border: black solid 2px;
+  border: black solid 4px;
   background-color: lightgray;
   overflow: auto;
   position: relative;
