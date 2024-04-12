@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 
-const MAX_SQUARES_PER_COLUMN = 5;
+const MAX_SQUARES_PER_COLUMN = 4;
 
 function App() {
   const [ideja, setIdeja] = useState([]);
@@ -12,6 +12,12 @@ function App() {
   const [gotov, setGotov] = useState([]);
   const [showInput, setShowInput] = useState(false);
   const [moveDates, setMoveDates] = useState({});
+  const [naslov, setNaslov] = useState("")
+  const [opis, setOpis] = useState("")
+
+  const handleDeleteItem = (index) => {
+      setIdeja(ideja.filter((_, i) => i !== index));
+  };
 
   const validateDateFormat = (dateString) => {
     // Provjera formata (YYYY-MM-DD)
@@ -34,12 +40,15 @@ function App() {
 
   const handleInputSubmit = (pickedColor) => {
     if (ideja.length < MAX_SQUARES_PER_COLUMN) {
-      setIdeja([...ideja, { color: pickedColor }]);
+      setIdeja([...ideja, { naslov: naslov, opis: opis, color: pickedColor }]);
     } else {
-      alert("Stupac Ideja je već popunjen");
+      alert("Dosegnut maksimalan broj elemenata.");
     }
     setShowInput(false);
+    setNaslov("")
+    setOpis("")
     pickedColor = null
+    alert(JSON.stringify(ideja))
   };
 
   const handleDragStart = (event, column, index) => {
@@ -292,7 +301,7 @@ const handleDrop = (event, targetColumn) => {
       }
     }
   } else {
-    alert("Stupac je već popunjen");
+    alert("Dosegnut maksimalan broj elemenata.");
   }
 };
 
@@ -320,27 +329,53 @@ const isTaskTooLongInPhase = (column, moveDate) => {
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "ideja")}>
           <button id="button-plus" onClick={handleButtonClick}>+</button>
+          
           {showInput && (
             <div className='modal'>
               <div className='modal-content'>
-              <div>
-                <button className = "colorButton" onClick={() => handleInputSubmit("purple")} style={{ backgroundColor: 'purple' }}>PURPLE</button>
-                <button className = "colorButton" onClick={() => handleInputSubmit("blue")} style={{ backgroundColor: 'blue' }}>BLUE</button>
-                <button className = "colorButton" onClick={() => handleInputSubmit("green")} style={{ backgroundColor: 'green' }}>GREEN</button>
-                {/* Dodajemo gumbove za odabir boje */}
-              </div>
-                <button id="returnButton" onClick={handleReturnButton}>Return</button>
-              </div>
+                <div>
+                  <label htmlFor="naslov" id='inputLabel'>Naslov: </label>
+                  <input
+                  id='naslov'
+                  type='text'
+                  value={naslov}
+                  onChange={e => setNaslov(e.target.value)}
+                  style={{ border: "solid black 2px", width: "400px", height: "30px", marginBottom: "30px" }}/>
+                </div>
+
+                <div>
+                  <label htmlFor="opis" id='inputLabel'>Opis: </label>
+                  <textarea
+                  id='opis'
+                  type = "text"
+                  value={opis}
+                  onChange={e => setOpis(e.target.value)}
+                  style={{ border: "solid black 2px", width: "400px", height: "200px", marginBottom: "30px" }}/>
+                </div>
+
+                <div>
+                  <button className = "colorButton" onClick={() => handleInputSubmit("purple")} style={{ backgroundColor: 'purple' }}>PURPLE</button>
+                  <button className = "colorButton" onClick={() => handleInputSubmit("blue")} style={{ backgroundColor: 'blue' }}>BLUE</button>
+                  <button className = "colorButton" onClick={() => handleInputSubmit("green")} style={{ backgroundColor: 'green' }}>GREEN</button>
+                  {/* Dodajemo gumbove za odabir boje */}
+                </div>
+                  <button id="returnButton" onClick={handleReturnButton}>Return</button>
+                </div>
             </div>
           )}
-          {ideja.map((_, index) => (
-            <div
-              id='list'
-              key={index}
-              draggable
-              onDragStart={(event) => handleDragStart(event, "ideja", index)}
-              style={{ marginTop: 30, marginLeft: 10, marginBottom: 1, backgroundColor: ideja[index].color, width: '50px', height: '50px', cursor: "pointer"}}
-            />
+
+            {ideja.map((item, index) => (
+                <div
+                  id='list'
+                  key={index}
+                  draggable
+                  onDragStart={(event) => handleDragStart(event, "ideja", index)}
+                  style={{ backgroundColor: ideja[index].color }}>
+                    <div id='naslov-zadatka'>
+                    {item.naslov}
+                    </div>
+                <button onClick={() => handleDeleteItem(index)} style={{ position: 'absolute', bottom: 3, right: 3, border: "solid black 3px"}}>X</button>
+              </div>
           ))}
         </div>
       </div>
@@ -356,7 +391,11 @@ const isTaskTooLongInPhase = (column, moveDate) => {
               key={index}
               draggable
               onDragStart={(event) => handleDragStart(event, "plan", index)}
-              style={{ marginTop: 30, marginLeft: 10, marginBottom: 1, backgroundColor: plan[index].color, width: '50px', height: '50px', cursor: "pointer", position: "relative" }}>
+              style={{ backgroundColor: plan[index].color, border: isTodayDeadline(item.deadline) ? "2px solid red" : "2px solid black" }}>
+
+                <div id='naslov-zadatka'>
+                  {item.naslov}
+                </div>
                
               {isTodayDeadline(item.deadline) && (
                 <div className="warning-sign" title={`Deadline: last day (${item.deadline})`}/>
@@ -376,14 +415,17 @@ const isTaskTooLongInPhase = (column, moveDate) => {
         <div className='izrada'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "izrada")}>
-          {izrada.map((_, index) => (
+          {izrada.map((item, index) => (
             <div
               id='list'
               key={index}
               draggable
               onDragStart={(event) => handleDragStart(event, "izrada", index)}
-              style={{ marginTop: 30, marginLeft: 10, marginBottom: 1, backgroundColor: izrada[index].color, width: '50px', height: '50px', cursor: "pointer" }}
-            />
+              style={{ backgroundColor: izrada[index].color }}>
+                <div id='naslov-zadatka'>
+                  {item.naslov}
+                </div>
+            </div>
           ))}
         </div>
       </div>
@@ -393,14 +435,17 @@ const isTaskTooLongInPhase = (column, moveDate) => {
         <div className='test'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "test")}>
-          {test.map((_, index) => (
+          {test.map((item, index) => (
             <div
               id='list'
               key={index}
               draggable
               onDragStart={(event) => handleDragStart(event, "test", index)}
-              style={{ marginTop: 30, marginLeft: 10, marginBottom: 1, backgroundColor: test[index].color, width: '50px', height: '50px', cursor: "pointer" }}
-            />
+              style={{ backgroundColor: test[index].color }}>
+                <div id='naslov-zadatka'>
+                  {item.naslov}
+                </div>
+              </div>
           ))}
         </div>
       </div>
@@ -410,14 +455,17 @@ const isTaskTooLongInPhase = (column, moveDate) => {
         <div className='integriran'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "integriran")}>
-          {integriran.map((_, index) => (
+          {integriran.map((item, index) => (
             <div
               id='list'
               key={index}
               draggable
               onDragStart={(event) => handleDragStart(event, "integriran", index)}
-              style={{ marginTop: 30, marginLeft: 10, marginBottom: 1, backgroundColor: integriran[index].color, width: '50px', height: '50px', cursor: "pointer" }}
-            />
+              style={{ backgroundColor: integriran[index].color }}>
+                <div id='naslov-zadatka'>
+                  {item.naslov}
+                </div>
+              </div>
           ))}
         </div>
       </div>
@@ -433,7 +481,7 @@ const isTaskTooLongInPhase = (column, moveDate) => {
               key={index}
               draggable
               onDragStart={(event) => handleDragStart(event, "gotov", index)}
-              style={{ marginTop: 30, marginLeft: 10, marginBottom: 1, backgroundColor: gotov[index].color, width: '50px', height: '50px', cursor: "pointer" }}
+              style={{ backgroundColor: gotov[index].color }}
             />
           ))}
         </div>
