@@ -11,23 +11,11 @@ function App() {
   const [integriran, setIntegriran] = useState([]);
   const [gotov, setGotov] = useState([]);
   const [showInput, setShowInput] = useState(false);
-  const [moveDates, setMoveDates] = useState({});
   const [naslov, setNaslov] = useState("")
   const [opis, setOpis] = useState("")
 
   const handleDeleteItem = (index) => {
       setIdeja(ideja.filter((_, i) => i !== index));
-  };
-
-  const validateDateFormat = (dateString) => {
-    // Provjera formata (YYYY-MM-DD)
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    return regex.test(dateString);
-  };
-
-  const isTodayDeadline = (deadline) => {
-    const today = new Date().toISOString().split('T')[0];
-    return today === deadline;
   };
 
   const handleReturnButton = () => {
@@ -38,9 +26,9 @@ function App() {
     setShowInput(true);
   };
 
-  const handleInputSubmit = (pickedColor) => {
+  const handleInputSubmit = (pickedColor, role) => {
     if (ideja.length < MAX_SQUARES_PER_COLUMN) {
-      setIdeja([...ideja, { naslov: naslov, opis: opis, color: pickedColor }]);
+      setIdeja([...ideja, { naslov: naslov, opis: opis, color: pickedColor, role: role }]);
     } else {
       alert("Dosegnut maksimalan broj elemenata.");
     }
@@ -63,19 +51,6 @@ const handleDrop = (event, targetColumn) => {
   event.preventDefault();
   const data = JSON.parse(event.dataTransfer.getData("text/plain"));
   const { column, index } = data;
-
-  if (column === "ideja" && targetColumn === "plan") {
-    const deadlineInput = prompt("Unesite deadline (YYYY-MM-DD format):");
-    
-    if (deadlineInput && validateDateFormat(deadlineInput)) {
-      const newPlanItem = { ...ideja[index], deadline: deadlineInput };
-      setPlan([...plan, newPlanItem]);
-      setIdeja(ideja.filter((_, i) => i !== index));
-    } else {
-      alert("Neispravan format datuma. Molimo unesite u formatu YYYY-MM-DD.");
-    }
-    return;
-  }
 
   if (column === "ideja" && targetColumn === "izrada") {
     alert("You can't drag to Izrada")
@@ -225,8 +200,10 @@ const handleDrop = (event, targetColumn) => {
           const draggedIdeja = ideja[index];
           setIdeja(ideja.filter((_, i) => i !== index));
           switch (targetColumn) {
-            case "izrada":
-              setIzrada([...izrada, draggedIdeja]);
+            case "plan":
+              const moveDatePlan = new Date();
+              setPlan([...plan, { ...draggedIdeja, moveDatePlan: moveDatePlan }]);
+              alert(JSON.stringify(plan) + "\n")
               break;
             default:
               break;
@@ -238,10 +215,8 @@ const handleDrop = (event, targetColumn) => {
           setPlan(plan.filter((_, i) => i !== index));
           switch (targetColumn) {
             case "izrada":
-              setIzrada([...izrada, draggedPlan]);
-              break;
-            case "test":
-              setTest([...test, draggedPlan])
+              const moveDateIzrada = new Date()
+              setIzrada([...izrada, { ...draggedPlan, moveDateIzrada: moveDateIzrada }]);
               break;
             default:
               break;
@@ -253,7 +228,8 @@ const handleDrop = (event, targetColumn) => {
           setIzrada(izrada.filter((_, i) => i !== index));
           switch (targetColumn) {
             case "test":
-              setTest([...test, draggedIzrada])
+              const moveDateTest = new Date()
+              setTest([...test, { ...draggedIzrada, moveDateTest: moveDateTest }])
               break;
             default:
               break;
@@ -265,7 +241,8 @@ const handleDrop = (event, targetColumn) => {
           setTest(test.filter((_, i) => i !== index));
           switch (targetColumn) {
             case "integriran":
-              setIntegriran([...integriran, draggedTest])
+              const moveDateIntegriran = new Date()
+              setIntegriran([...integriran, { ...draggedTest, moveDateIntegriran: moveDateIntegriran }])
               break;
             default:
               break;
@@ -277,7 +254,9 @@ const handleDrop = (event, targetColumn) => {
           setIntegriran(integriran.filter((_, i) => i !== index));
           switch (targetColumn) {
             case "gotov":
-              setGotov([...gotov, draggedIntegriran])
+              const moveDateGotov = new Date()
+              setGotov([...gotov, { ...draggedIntegriran, moveDateGotov: moveDateGotov}])
+              alert(JSON.stringify(gotov) + "\n")
               break;
             default:
               break;
@@ -305,21 +284,20 @@ const handleDrop = (event, targetColumn) => {
   }
 };
 
-const isTaskTooLongInPhase = (column, moveDate) => {
-  const today = new Date();
-  const oneDay = 24 * 60 * 60 * 1000;
+const isTaskTooLongInPhase = (dateMoved) => {
+  const currentDate = new Date()
+  
+  const timeDifference = currentDate.getTime() - dateMoved.getTime()
 
-  const daysTooLongInPhase = Math.round((today - moveDate) / oneDay);
+  const daysDifference = Math.floor(timeDifference / (1000 * 60))
 
-  alert(daysTooLongInPhase + "---" + moveDate + "-----" + today)
-
-  if (column === "inProgress" && daysTooLongInPhase >= 1) {
-    return true;
-  } else if (column === "done" && daysTooLongInPhase > 7) {
-    return true;
-  }
-  return false;
-};
+  if(daysDifference > 2)
+    return "4px red"
+  else if(daysDifference > 1)
+    return "4px yellow"  
+  else
+    return "2px black"
+}
 
   return (
     <div className='app'>
@@ -354,9 +332,9 @@ const isTaskTooLongInPhase = (column, moveDate) => {
                 </div>
 
                 <div>
-                  <button className = "colorButton" onClick={() => handleInputSubmit("purple")} style={{ backgroundColor: 'purple' }}>PURPLE</button>
-                  <button className = "colorButton" onClick={() => handleInputSubmit("blue")} style={{ backgroundColor: 'blue' }}>BLUE</button>
-                  <button className = "colorButton" onClick={() => handleInputSubmit("green")} style={{ backgroundColor: 'green' }}>GREEN</button>
+                  <button className = "colorButton" onClick={() => handleInputSubmit("purple", "frontend")} style={{ backgroundColor: 'purple' }}>FRONTEND</button>
+                  <button className = "colorButton" onClick={() => handleInputSubmit("blue", "backend")} style={{ backgroundColor: 'blue' }}>BACKEND</button>
+                  <button className = "colorButton" onClick={() => handleInputSubmit("green", "dizajn")} style={{ backgroundColor: 'green' }}>DESIGN</button>
                   {/* Dodajemo gumbove za odabir boje */}
                 </div>
                   <button id="returnButton" onClick={handleReturnButton}>Return</button>
@@ -391,20 +369,11 @@ const isTaskTooLongInPhase = (column, moveDate) => {
               key={index}
               draggable
               onDragStart={(event) => handleDragStart(event, "plan", index)}
-              style={{ backgroundColor: plan[index].color, border: isTodayDeadline(item.deadline) ? "2px solid red" : "2px solid black" }}>
+              style={{ backgroundColor: plan[index].color, border: `solid ${isTaskTooLongInPhase(item.moveDatePlan)}` }}>
 
                 <div id='naslov-zadatka'>
                   {item.naslov}
                 </div>
-               
-              {isTodayDeadline(item.deadline) && (
-                <div className="warning-sign" title={`Deadline: last day (${item.deadline})`}/>
-              )}
-
-              {/*{isTaskTooLongInPhase("inProgress", moveDates[item.date]) && (
-                <div className="tooLong-sign" title='Predugo u fazi!'/>
-              )} */}
-
               </div>
           ))}
           </div>
@@ -421,7 +390,7 @@ const isTaskTooLongInPhase = (column, moveDate) => {
               key={index}
               draggable
               onDragStart={(event) => handleDragStart(event, "izrada", index)}
-              style={{ backgroundColor: izrada[index].color }}>
+              style={{ backgroundColor: izrada[index].color, border: `solid ${isTaskTooLongInPhase(item.moveDateIzrada)}` }}>
                 <div id='naslov-zadatka'>
                   {item.naslov}
                 </div>
@@ -441,7 +410,7 @@ const isTaskTooLongInPhase = (column, moveDate) => {
               key={index}
               draggable
               onDragStart={(event) => handleDragStart(event, "test", index)}
-              style={{ backgroundColor: test[index].color }}>
+              style={{ backgroundColor: test[index].color, border: `solid ${isTaskTooLongInPhase(item.moveDateTest)}` }}>
                 <div id='naslov-zadatka'>
                   {item.naslov}
                 </div>
@@ -461,7 +430,7 @@ const isTaskTooLongInPhase = (column, moveDate) => {
               key={index}
               draggable
               onDragStart={(event) => handleDragStart(event, "integriran", index)}
-              style={{ backgroundColor: integriran[index].color }}>
+              style={{ backgroundColor: integriran[index].color, border: `solid ${isTaskTooLongInPhase(item.moveDateIntegriran)}` }}>
                 <div id='naslov-zadatka'>
                   {item.naslov}
                 </div>
@@ -490,5 +459,4 @@ const isTaskTooLongInPhase = (column, moveDate) => {
     </div>
   );
 }
-
 export default App;
