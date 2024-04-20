@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import { collection, addDoc, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { db } from './firebase'; // Pretpostavljam da ste već konfigurirali vezu s Firestore-om u firebase.js datoteci
+
 
 const MAX_SQUARES_PER_COLUMN = 4;
 
@@ -14,8 +17,34 @@ function App() {
   const [naslov, setNaslov] = useState("")
   const [opis, setOpis] = useState("")
 
-  const handleDeleteItem = (index) => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const idejaCollection = collection(db, 'ideja');
+        const idejaSnapshot = await getDocs(idejaCollection);
+        const idejaData = idejaSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIdeja(idejaData);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Greška prilikom dohvaćanja ideja iz baze podataka:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleDeleteItem = async (id, index) => {
+    try {
+      // Izbrisati dokument iz baze podataka
+      await deleteDoc(doc(db, 'ideja', id));
+
+      // Ažurirati lokalno stanje ideja
       setIdeja(ideja.filter((_, i) => i !== index));
+    } catch (error) {
+      console.error('Greška prilikom brisanja dokumenta iz baze podataka:', error);
+    }
   };
 
   const handleReturnButton = () => {
@@ -26,17 +55,29 @@ function App() {
     setShowInput(true);
   };
 
-  const handleInputSubmit = (pickedColor, role) => {
+  const handleInputSubmit = async (pickedColor, role) => {
+    if (isLoading) return;
+
     if (ideja.length < MAX_SQUARES_PER_COLUMN) {
-      setIdeja([...ideja, { naslov: naslov, opis: opis, color: pickedColor, role: role }]);
+      const newIdeja = { naslov: naslov, opis: opis, color: pickedColor, role: role };
+      try {
+        const docRef = await addDoc(collection(db, 'ideja'), newIdeja);
+        alert('Dokument je uspješno dodan:' + docRef.id);
+
+        // Dodajte novu ideju u lokalno stanje ideja
+        setIdeja([...ideja, { id: docRef.id, ...newIdeja }]);
+      } catch (error) {
+        console.error('Greška prilikom dodavanja dokumenta:', error);
+        alert('Greška prilikom spremanja ideje u bazu podataka.');
+      }
     } else {
       alert("Dosegnut maksimalan broj elemenata.");
     }
     setShowInput(false);
-    setNaslov("")
-    setOpis("")
-    pickedColor = null
-    alert(JSON.stringify(ideja))
+    setNaslov("");
+    setOpis("");
+    pickedColor = null;
+    alert(JSON.stringify(ideja));
   };
 
   const handleDragStart = (event, column, index) => {
@@ -47,7 +88,7 @@ function App() {
     event.preventDefault();
   };
 
-const handleDrop = (event, targetColumn) => {
+const handleDrop = async(event, targetColumn) => {
   event.preventDefault();
   const data = JSON.parse(event.dataTransfer.getData("text/plain"));
   const { column, index } = data;
@@ -198,12 +239,26 @@ const handleDrop = (event, targetColumn) => {
       switch (column) {
         case "ideja":
           const draggedIdeja = ideja[index];
+          alert(draggedIdeja.id)
+          try {
+            // Brišemo objekt iz kolekcije "ideja"
+            await deleteDoc(doc(db, "ideja", draggedIdeja.id));
+            console.log("Dokument uspješno obrisan iz kolekcije 'ideja'.");
+          } catch (error) {
+            console.error("Greška prilikom brisanja dokumenta iz kolekcije 'ideja':", error);
+          }
           setIdeja(ideja.filter((_, i) => i !== index));
           switch (targetColumn) {
             case "plan":
               const moveDatePlan = new Date();
-              setPlan([...plan, { ...draggedIdeja, moveDatePlan: moveDatePlan }]);
-              alert(JSON.stringify(plan) + "\n")
+              try {
+                // Dodajemo objekt u kolekciju "plan"
+                const docRef = await addDoc(collection(db, "plan"), { ...draggedIdeja, moveDatePlan });
+                console.log("Dokument uspješno dodan u kolekciju 'plan' s ID:", docRef.id);
+              } catch (error) {
+                console.error("Greška prilikom dodavanja dokumenta u kolekciju 'plan':", error);
+              }
+              setPlan([...plan, { ...draggedIdeja, moveDatePlan }]);
               break;
             default:
               break;
@@ -289,7 +344,7 @@ const isTaskTooLongInPhase = (dateMoved) => {
   
   const timeDifference = currentDate.getTime() - dateMoved.getTime()
 
-  const daysDifference = Math.floor(timeDifference / (1000 * 60))
+  const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24))
 
   if(daysDifference > 2)
     return "4px red"
@@ -302,7 +357,7 @@ const isTaskTooLongInPhase = (dateMoved) => {
   return (
     <div className='app'>
       <div className='column'>
-        <h2>Ideja</h2>
+        <h2 id='header'>Ideja</h2>
         <div className='ideja'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "ideja")}>
@@ -352,14 +407,14 @@ const isTaskTooLongInPhase = (dateMoved) => {
                     <div id='naslov-zadatka'>
                     {item.naslov}
                     </div>
-                <button onClick={() => handleDeleteItem(index)} style={{ position: 'absolute', bottom: 3, right: 3, border: "solid black 3px"}}>X</button>
+                <button onClick={() => handleDeleteItem(item.id, index)} style={{ position: 'absolute', bottom: 3, right: 3, border: "solid black 3px"}}>X</button>
               </div>
           ))}
         </div>
       </div>
 
       <div className='column'>
-        <h2>Plan</h2>
+        <h2 id='header'>Plan</h2>
         <div className='plan'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "plan")}>
@@ -380,7 +435,7 @@ const isTaskTooLongInPhase = (dateMoved) => {
       </div>
 
       <div className='column'>
-        <h2>Izrada</h2>
+        <h2 id='header'>Izrada</h2>
         <div className='izrada'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "izrada")}>
@@ -400,7 +455,7 @@ const isTaskTooLongInPhase = (dateMoved) => {
       </div>
 
       <div className='column'>
-        <h2>Test</h2>
+        <h2 id='header'>Test</h2>
         <div className='test'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "test")}>
@@ -420,7 +475,7 @@ const isTaskTooLongInPhase = (dateMoved) => {
       </div>
 
       <div className='column'>
-        <h2>Integriran</h2>
+        <h2 id='header'>Integriran</h2>
         <div className='integriran'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "integriran")}>
@@ -440,7 +495,7 @@ const isTaskTooLongInPhase = (dateMoved) => {
       </div>
 
       <div className='column'>
-        <h2>Gotov</h2>
+        <h2 id='header'>Gotov</h2>
         <div className='gotov'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "gotov")}>
