@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { collection, addDoc, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
-import { db } from './firebase'; // Pretpostavljam da ste već konfigurirali vezu s Firestore-om u firebase.js datoteci
+import { db } from './firebase';
 
 
 const MAX_SQUARES_PER_COLUMN = 4;
@@ -26,6 +26,27 @@ function App() {
         const idejaSnapshot = await getDocs(idejaCollection);
         const idejaData = idejaSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setIdeja(idejaData);
+
+        const planCollection = collection(db, 'plan');
+        const planSnapshot = await getDocs(planCollection);
+        const planData = planSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setPlan(planData);
+
+        const izradaCollection = collection(db, 'izrada');
+        const izradaSnapshot = await getDocs(izradaCollection);
+        const izradaData = izradaSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIzrada(izradaData);
+
+        const testCollection = collection(db, 'test');
+        const testSnapshot = await getDocs(testCollection);
+        const testData = testSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setTest(testData);
+
+        const integriranCollection = collection(db, 'integriran');
+        const integriranSnapshot = await getDocs(integriranCollection);
+        const integriranData = integriranSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIntegriran(integriranData);
+
         setIsLoading(false);
       } catch (error) {
         console.error('Greška prilikom dohvaćanja ideja iz baze podataka:', error);
@@ -62,13 +83,13 @@ function App() {
       const newIdeja = { naslov: naslov, opis: opis, color: pickedColor, role: role };
       try {
         const docRef = await addDoc(collection(db, 'ideja'), newIdeja);
-        alert('Dokument je uspješno dodan:' + docRef.id);
+        console.log('Dokument je uspješno dodan:' + docRef.id);
 
         // Dodajte novu ideju u lokalno stanje ideja
         setIdeja([...ideja, { id: docRef.id, ...newIdeja }]);
       } catch (error) {
         console.error('Greška prilikom dodavanja dokumenta:', error);
-        alert('Greška prilikom spremanja ideje u bazu podataka.');
+        console.log('Greška prilikom spremanja ideje u bazu podataka.');
       }
     } else {
       alert("Dosegnut maksimalan broj elemenata.");
@@ -77,7 +98,6 @@ function App() {
     setNaslov("");
     setOpis("");
     pickedColor = null;
-    alert(JSON.stringify(ideja));
   };
 
   const handleDragStart = (event, column, index) => {
@@ -239,7 +259,6 @@ const handleDrop = async(event, targetColumn) => {
       switch (column) {
         case "ideja":
           const draggedIdeja = ideja[index];
-          alert(draggedIdeja.id)
           try {
             // Brišemo objekt iz kolekcije "ideja"
             await deleteDoc(doc(db, "ideja", draggedIdeja.id));
@@ -248,17 +267,21 @@ const handleDrop = async(event, targetColumn) => {
             console.error("Greška prilikom brisanja dokumenta iz kolekcije 'ideja':", error);
           }
           setIdeja(ideja.filter((_, i) => i !== index));
+
           switch (targetColumn) {
             case "plan":
               const moveDatePlan = new Date();
+              const newDocRef = doc(collection(db, 'plan'));
+              const newDocId = newDocRef.id;
+              const newDocData = { ...draggedIdeja, moveDatePlan, id: newDocId };
+
               try {
-                // Dodajemo objekt u kolekciju "plan"
-                const docRef = await addDoc(collection(db, "plan"), { ...draggedIdeja, moveDatePlan });
-                console.log("Dokument uspješno dodan u kolekciju 'plan' s ID:", docRef.id);
+                await setDoc(newDocRef, newDocData); // Dodajte dokument u Firestore s postavljenim ID-om
+                console.log("Dokument uspješno dodan u kolekciju 'plan' s ID:", newDocId);
               } catch (error) {
                 console.error("Greška prilikom dodavanja dokumenta u kolekciju 'plan':", error);
               }
-              setPlan([...plan, { ...draggedIdeja, moveDatePlan }]);
+              setPlan([...plan, newDocData]);
               break;
             default:
               break;
@@ -267,11 +290,28 @@ const handleDrop = async(event, targetColumn) => {
 
         case "plan":
           const draggedPlan = plan[index];
+          try {
+            await deleteDoc(doc(db, "plan", draggedPlan.id));
+            console.log("Dokument uspješno obrisan iz kolekcije 'plan'.");
+          } catch (error) {
+            console.error("Greška prilikom brisanja dokumenta iz kolekcije 'plan':", error);
+          }
           setPlan(plan.filter((_, i) => i !== index));
+
           switch (targetColumn) {
             case "izrada":
               const moveDateIzrada = new Date()
-              setIzrada([...izrada, { ...draggedPlan, moveDateIzrada: moveDateIzrada }]);
+              const newDocRef = doc(collection(db, 'izrada'));
+              const newDocId = newDocRef.id;
+              const newDocData = { ...draggedPlan, moveDateIzrada, id: newDocId };
+
+              try {
+                await setDoc(newDocRef, newDocData);
+                console.log("Dokument uspješno dodan u kolekciju 'izrada' s ID:", newDocId);
+              } catch (error) {
+                console.error("Greška prilikom dodavanja dokumenta u kolekciju 'izrada':", error);
+              }
+              setIzrada([...izrada, newDocData ]);
               break;
             default:
               break;
@@ -280,11 +320,28 @@ const handleDrop = async(event, targetColumn) => {
 
         case "izrada":
           const draggedIzrada = izrada[index];
+          try {
+            await deleteDoc(doc(db, "izrada", draggedIzrada.id));
+            console.log("Dokument uspješno obrisan iz kolekcije 'izrada'.");
+          } catch (error) {
+            console.error("Greška prilikom brisanja dokumenta iz kolekcije 'izrada':", error);
+          }
           setIzrada(izrada.filter((_, i) => i !== index));
+
           switch (targetColumn) {
             case "test":
               const moveDateTest = new Date()
-              setTest([...test, { ...draggedIzrada, moveDateTest: moveDateTest }])
+              const newDocRef = doc(collection(db, 'test'));
+              const newDocId = newDocRef.id;
+              const newDocData = { ...draggedIzrada, moveDateTest, id: newDocId };
+
+              try {
+                await setDoc(newDocRef, newDocData);
+                console.log("Dokument uspješno dodan u kolekciju 'test' s ID:", newDocId);
+              } catch (error) {
+                console.error("Greška prilikom dodavanja dokumenta u kolekciju 'test':", error);
+              }
+              setTest([...test, newDocData ])
               break;
             default:
               break;
@@ -293,11 +350,28 @@ const handleDrop = async(event, targetColumn) => {
 
         case "test":
           const draggedTest = test[index];
+          try {
+            await deleteDoc(doc(db, "test", draggedTest.id));
+            console.log("Dokument uspješno obrisan iz kolekcije 'test'.");
+          } catch (error) {
+            console.error("Greška prilikom brisanja dokumenta iz kolekcije 'test':", error);
+          }
           setTest(test.filter((_, i) => i !== index));
+
           switch (targetColumn) {
             case "integriran":
               const moveDateIntegriran = new Date()
-              setIntegriran([...integriran, { ...draggedTest, moveDateIntegriran: moveDateIntegriran }])
+              const newDocRef = doc(collection(db, 'integriran'));
+              const newDocId = newDocRef.id;
+              const newDocData = { ...draggedTest, moveDateIntegriran, id: newDocId };
+
+              try {
+                await setDoc(newDocRef, newDocData);
+                console.log("Dokument uspješno dodan u kolekciju 'integriran' s ID:", newDocId);
+              } catch (error) {
+                console.error("Greška prilikom dodavanja dokumenta u kolekciju 'integriran':", error);
+              }
+              setIntegriran([...integriran, newDocData ])
               break;
             default:
               break;
@@ -306,19 +380,35 @@ const handleDrop = async(event, targetColumn) => {
 
         case "integriran":
           const draggedIntegriran = integriran[index];
+          try {
+            await deleteDoc(doc(db, "integriran", draggedIntegriran.id));
+            console.log("Dokument uspješno obrisan iz kolekcije 'integriran'.");
+          } catch (error) {
+            console.error("Greška prilikom brisanja dokumenta iz kolekcije 'integriran':", error);
+          }
           setIntegriran(integriran.filter((_, i) => i !== index));
+
           switch (targetColumn) {
             case "gotov":
               const moveDateGotov = new Date()
-              setGotov([...gotov, { ...draggedIntegriran, moveDateGotov: moveDateGotov}])
-              alert(JSON.stringify(gotov) + "\n")
+              const newDocRef = doc(collection(db, 'gotov'));
+              const newDocId = newDocRef.id;
+              const newDocData = { ...draggedIntegriran, moveDateGotov, id: newDocId };
+
+              try {
+                await setDoc(newDocRef, newDocData);
+                console.log("Dokument uspješno dodan u kolekciju 'gotov' s ID:", newDocId);
+              } catch (error) {
+                console.error("Greška prilikom dodavanja dokumenta u kolekciju 'gotov':", error);
+              }
+              setGotov([...gotov, newDocData ])
               break;
             default:
               break;
           }
           break;
 
-        case "gotov":
+        /*case "gotov":
           const draggedGotov = gotov[index];
           setGotov(gotov.filter((_, i) => i !== index));
           switch (targetColumn) {
@@ -327,8 +417,8 @@ const handleDrop = async(event, targetColumn) => {
               break;
             default:
               break;
-          }
-          break;
+          } 
+          break; */
 
         default:
           break;
@@ -341,14 +431,16 @@ const handleDrop = async(event, targetColumn) => {
 
 const isTaskTooLongInPhase = (dateMoved) => {
   const currentDate = new Date()
+
+  const dMoved = new Date(dateMoved.seconds * 1000 + dateMoved.nanoseconds / 1000000);
   
-  const timeDifference = currentDate.getTime() - dateMoved.getTime()
+  const timeDifference = currentDate.getTime() - dMoved.getTime()
 
   const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24))
 
-  if(daysDifference > 2)
+  if(daysDifference > 4)
     return "4px red"
-  else if(daysDifference > 1)
+  else if(daysDifference > 2)
     return "4px yellow"  
   else
     return "2px black"
@@ -387,9 +479,9 @@ const isTaskTooLongInPhase = (dateMoved) => {
                 </div>
 
                 <div>
-                  <button className = "colorButton" onClick={() => handleInputSubmit("purple", "frontend")} style={{ backgroundColor: 'purple' }}>FRONTEND</button>
-                  <button className = "colorButton" onClick={() => handleInputSubmit("blue", "backend")} style={{ backgroundColor: 'blue' }}>BACKEND</button>
-                  <button className = "colorButton" onClick={() => handleInputSubmit("green", "dizajn")} style={{ backgroundColor: 'green' }}>DESIGN</button>
+                  <button className = "colorButton" onClick={() => handleInputSubmit("purple", "Frontend")} style={{ backgroundColor: 'purple' }}>FRONTEND</button>
+                  <button className = "colorButton" onClick={() => handleInputSubmit("blue", "Backend")} style={{ backgroundColor: 'blue' }}>BACKEND</button>
+                  <button className = "colorButton" onClick={() => handleInputSubmit("green", "Dizajn")} style={{ backgroundColor: 'green' }}>DESIGN</button>
                   {/* Dodajemo gumbove za odabir boje */}
                 </div>
                   <button id="returnButton" onClick={handleReturnButton}>Return</button>
@@ -499,15 +591,7 @@ const isTaskTooLongInPhase = (dateMoved) => {
         <div className='gotov'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "gotov")}>
-          {gotov.map((_, index) => (
-            <div
-              id='list'
-              key={index}
-              draggable
-              onDragStart={(event) => handleDragStart(event, "gotov", index)}
-              style={{ backgroundColor: gotov[index].color }}
-            />
-          ))}
+          <a href='/pregled' style={{ marginTop: "200px", fontSize:"30px"}}>Pregled</a>
         </div>
       </div>
       

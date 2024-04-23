@@ -2,7 +2,8 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import App from './App';
 import Login from './login';
-import { auth } from './firebase'; // Importamo auth iz firebase
+import Pregled from './Pregled';
+import { auth } from './firebase';
 
 function ProtectedRoute({ element, ...rest }) {
   // Provjeravamo autentikaciju korisnika
@@ -20,6 +21,7 @@ function AppRouter() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/app" element={<ProtectedRoute element={<App />} />} />
+      <Route path='/pregled' element={<Pregled />} />
     </Routes>
   );
 }
