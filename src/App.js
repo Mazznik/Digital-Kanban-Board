@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { collection, addDoc, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, auth } from './firebase';
+import { useNavigate } from "react-router-dom";
+import { getDoc } from 'firebase/firestore';
 
 
 const MAX_SQUARES_PER_COLUMN = 4;
@@ -18,8 +20,29 @@ function App() {
   const [opis, setOpis] = useState("")
 
   const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState("");
+  const [userName, setUserName] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUserRole(userData.role);
+            setUserName(userData.name);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+      }
+    };
+
     const fetchData = async () => {
       try {
         const idejaCollection = collection(db, 'ideja');
@@ -49,10 +72,11 @@ function App() {
 
         setIsLoading(false);
       } catch (error) {
-        console.error('Greška prilikom dohvaćanja ideja iz baze podataka:', error);
+        console.error('Greška prilikom dohvaćanja podataka iz baze podataka:', error);
       }
     };
 
+    fetchUserRole();
     fetchData();
   }, []);
 
@@ -259,127 +283,148 @@ const handleDrop = async(event, targetColumn) => {
       switch (column) {
         case "ideja":
           const draggedIdeja = ideja[index];
-          try {
-            // Brišemo objekt iz kolekcije "ideja"
-            await deleteDoc(doc(db, "ideja", draggedIdeja.id));
-            console.log("Dokument uspješno obrisan iz kolekcije 'ideja'.");
-          } catch (error) {
-            console.error("Greška prilikom brisanja dokumenta iz kolekcije 'ideja':", error);
-          }
-          setIdeja(ideja.filter((_, i) => i !== index));
+          if(userRole === "programer" || userRole === "project manager"){
+            try {
+              // Brišemo objekt iz kolekcije "ideja"
+              await deleteDoc(doc(db, "ideja", draggedIdeja.id));
+              console.log("Dokument uspješno obrisan iz kolekcije 'ideja'.");
+            } catch (error) {
+              console.error("Greška prilikom brisanja dokumenta iz kolekcije 'ideja':", error);
+            }
+            setIdeja(ideja.filter((_, i) => i !== index));
 
-          switch (targetColumn) {
-            case "plan":
-              const moveDatePlan = new Date();
-              const newDocRef = doc(collection(db, 'plan'));
-              const newDocId = newDocRef.id;
-              const newDocData = { ...draggedIdeja, moveDatePlan, id: newDocId };
+            switch (targetColumn) {
+              case "plan":
+                const moveDatePlan = new Date();
+                const newDocRef = doc(collection(db, 'plan'));
+                const newDocId = newDocRef.id;
+                const newDocData = { ...draggedIdeja, moveDatePlan, id: newDocId,  programer: userName };
 
-              try {
-                await setDoc(newDocRef, newDocData); // Dodajte dokument u Firestore s postavljenim ID-om
-                console.log("Dokument uspješno dodan u kolekciju 'plan' s ID:", newDocId);
-              } catch (error) {
-                console.error("Greška prilikom dodavanja dokumenta u kolekciju 'plan':", error);
-              }
-              setPlan([...plan, newDocData]);
-              break;
-            default:
-              break;
-          }
+                try {
+                  await setDoc(newDocRef, newDocData); // Dodajte dokument u Firestore s postavljenim ID-om
+                  console.log("Dokument uspješno dodan u kolekciju 'plan' s ID:", newDocId);
+                } catch (error) {
+                  console.error("Greška prilikom dodavanja dokumenta u kolekciju 'plan':", error);
+                }
+                setPlan([...plan, newDocData]);
+                break;
+              default:
+                break;
+            }
+        }else{
+          alert("Ovlasti: programer!")
+          return;
+        }
           break;
 
         case "plan":
           const draggedPlan = plan[index];
-          try {
-            await deleteDoc(doc(db, "plan", draggedPlan.id));
-            console.log("Dokument uspješno obrisan iz kolekcije 'plan'.");
-          } catch (error) {
-            console.error("Greška prilikom brisanja dokumenta iz kolekcije 'plan':", error);
-          }
-          setPlan(plan.filter((_, i) => i !== index));
+          if(userRole === "programer" || userRole === "project manager"){
+            try {
+              await deleteDoc(doc(db, "plan", draggedPlan.id));
+              console.log("Dokument uspješno obrisan iz kolekcije 'plan'.");
+            } catch (error) {
+              console.error("Greška prilikom brisanja dokumenta iz kolekcije 'plan':", error);
+            }
+            setPlan(plan.filter((_, i) => i !== index));
 
-          switch (targetColumn) {
-            case "izrada":
-              const moveDateIzrada = new Date()
-              const newDocRef = doc(collection(db, 'izrada'));
-              const newDocId = newDocRef.id;
-              const newDocData = { ...draggedPlan, moveDateIzrada, id: newDocId };
+            switch (targetColumn) {
+              case "izrada":
+                const moveDateIzrada = new Date()
+                const newDocRef = doc(collection(db, 'izrada'));
+                const newDocId = newDocRef.id;
+                const newDocData = { ...draggedPlan, moveDateIzrada, id: newDocId };
 
-              try {
-                await setDoc(newDocRef, newDocData);
-                console.log("Dokument uspješno dodan u kolekciju 'izrada' s ID:", newDocId);
-              } catch (error) {
-                console.error("Greška prilikom dodavanja dokumenta u kolekciju 'izrada':", error);
-              }
-              setIzrada([...izrada, newDocData ]);
-              break;
-            default:
-              break;
-          }
+                try {
+                  await setDoc(newDocRef, newDocData);
+                  console.log("Dokument uspješno dodan u kolekciju 'izrada' s ID:", newDocId);
+                } catch (error) {
+                  console.error("Greška prilikom dodavanja dokumenta u kolekciju 'izrada':", error);
+                }
+                setIzrada([...izrada, newDocData ]);
+                break;
+              default:
+                break;
+            }
+        }else{
+          alert("Ovlasti: programer!")
+          return;
+        }
           break;
 
         case "izrada":
           const draggedIzrada = izrada[index];
-          try {
-            await deleteDoc(doc(db, "izrada", draggedIzrada.id));
-            console.log("Dokument uspješno obrisan iz kolekcije 'izrada'.");
-          } catch (error) {
-            console.error("Greška prilikom brisanja dokumenta iz kolekcije 'izrada':", error);
-          }
-          setIzrada(izrada.filter((_, i) => i !== index));
+          if(userRole === "programer" || userRole === "project manager"){
+            try {
+              await deleteDoc(doc(db, "izrada", draggedIzrada.id));
+              console.log("Dokument uspješno obrisan iz kolekcije 'izrada'.");
+            } catch (error) {
+              console.error("Greška prilikom brisanja dokumenta iz kolekcije 'izrada':", error);
+            }
+            setIzrada(izrada.filter((_, i) => i !== index));
 
-          switch (targetColumn) {
-            case "test":
-              const moveDateTest = new Date()
-              const newDocRef = doc(collection(db, 'test'));
-              const newDocId = newDocRef.id;
-              const newDocData = { ...draggedIzrada, moveDateTest, id: newDocId };
+            switch (targetColumn) {
+              case "test":
+                const moveDateTest = new Date()
+                const newDocRef = doc(collection(db, 'test'));
+                const newDocId = newDocRef.id;
+                const newDocData = { ...draggedIzrada, moveDateTest, id: newDocId };
 
-              try {
-                await setDoc(newDocRef, newDocData);
-                console.log("Dokument uspješno dodan u kolekciju 'test' s ID:", newDocId);
-              } catch (error) {
-                console.error("Greška prilikom dodavanja dokumenta u kolekciju 'test':", error);
-              }
-              setTest([...test, newDocData ])
-              break;
-            default:
-              break;
-          }
+                try {
+                  await setDoc(newDocRef, newDocData);
+                  console.log("Dokument uspješno dodan u kolekciju 'test' s ID:", newDocId);
+                } catch (error) {
+                  console.error("Greška prilikom dodavanja dokumenta u kolekciju 'test':", error);
+                }
+                setTest([...test, newDocData ])
+                break;
+              default:
+                break;
+            }
+        }else{
+          alert("Ovlasti: programer!")
+          return;
+        }
           break;
 
         case "test":
           const draggedTest = test[index];
-          try {
-            await deleteDoc(doc(db, "test", draggedTest.id));
-            console.log("Dokument uspješno obrisan iz kolekcije 'test'.");
-          } catch (error) {
-            console.error("Greška prilikom brisanja dokumenta iz kolekcije 'test':", error);
-          }
-          setTest(test.filter((_, i) => i !== index));
+          if(userRole === "tester" || userRole === "project manager"){
+            try {
+              await deleteDoc(doc(db, "test", draggedTest.id));
+              console.log("Dokument uspješno obrisan iz kolekcije 'test'.");
+            } catch (error) {
+              console.error("Greška prilikom brisanja dokumenta iz kolekcije 'test':", error);
+            }
+            setTest(test.filter((_, i) => i !== index));
 
-          switch (targetColumn) {
-            case "integriran":
-              const moveDateIntegriran = new Date()
-              const newDocRef = doc(collection(db, 'integriran'));
-              const newDocId = newDocRef.id;
-              const newDocData = { ...draggedTest, moveDateIntegriran, id: newDocId };
+            switch (targetColumn) {
+              case "integriran":
+                const moveDateIntegriran = new Date()
+                const newDocRef = doc(collection(db, 'integriran'));
+                const newDocId = newDocRef.id;
+                const newDocData = { ...draggedTest, moveDateIntegriran, id: newDocId, tester: userName };
 
-              try {
-                await setDoc(newDocRef, newDocData);
-                console.log("Dokument uspješno dodan u kolekciju 'integriran' s ID:", newDocId);
-              } catch (error) {
-                console.error("Greška prilikom dodavanja dokumenta u kolekciju 'integriran':", error);
-              }
-              setIntegriran([...integriran, newDocData ])
-              break;
-            default:
-              break;
-          }
+                try {
+                  await setDoc(newDocRef, newDocData);
+                  console.log("Dokument uspješno dodan u kolekciju 'integriran' s ID:", newDocId);
+                } catch (error) {
+                  console.error("Greška prilikom dodavanja dokumenta u kolekciju 'integriran':", error);
+                }
+                setIntegriran([...integriran, newDocData ])
+                break;
+              default:
+                break;
+            }
+        }else{
+          alert("Ovlasti: tester!")
+          return;
+        }
           break;
 
         case "integriran":
           const draggedIntegriran = integriran[index];
+          if(userRole === "project manager"){
           try {
             await deleteDoc(doc(db, "integriran", draggedIntegriran.id));
             console.log("Dokument uspješno obrisan iz kolekcije 'integriran'.");
@@ -406,6 +451,10 @@ const handleDrop = async(event, targetColumn) => {
             default:
               break;
           }
+        }else{
+          alert("Ovlasti: project manager!")
+          return;
+        }
           break;
 
         /*case "gotov":
@@ -446,8 +495,18 @@ const isTaskTooLongInPhase = (dateMoved) => {
     return "2px black"
 }
 
+const handleLogout = () => {
+  auth.signOut().then(() => {
+    navigate('/login');
+  }).catch((error) => {
+    console.error("Error logging out: ", error);
+  });
+};
+
   return (
     <div className='app'>
+      <button id = "logoutButton" onClick={handleLogout}>Logout</button>
+      <div><p id='imeUsera'>Korisnik: {userName} ({userRole})</p></div>
       <div className='column'>
         <h2 id='header'>Ideja</h2>
         <div className='ideja'
@@ -465,6 +524,8 @@ const isTaskTooLongInPhase = (dateMoved) => {
                   type='text'
                   value={naslov}
                   onChange={e => setNaslov(e.target.value)}
+                  maxLength={37}
+                  placeholder='Maksimalni broj znakova: 37.'
                   style={{ border: "solid black 2px", width: "400px", height: "30px", marginBottom: "30px" }}/>
                 </div>
 
@@ -521,6 +582,9 @@ const isTaskTooLongInPhase = (dateMoved) => {
                 <div id='naslov-zadatka'>
                   {item.naslov}
                 </div>
+                <div id='vlasnikZadatka'>
+                  P:{item.programer}
+                </div>
               </div>
           ))}
           </div>
@@ -540,6 +604,9 @@ const isTaskTooLongInPhase = (dateMoved) => {
               style={{ backgroundColor: izrada[index].color, border: `solid ${isTaskTooLongInPhase(item.moveDateIzrada)}` }}>
                 <div id='naslov-zadatka'>
                   {item.naslov}
+                </div>
+                <div id='vlasnikZadatka'>
+                  P: {item.programer}
                 </div>
             </div>
           ))}
@@ -561,6 +628,9 @@ const isTaskTooLongInPhase = (dateMoved) => {
                 <div id='naslov-zadatka'>
                   {item.naslov}
                 </div>
+                <div id='vlasnikZadatka'>
+                  P: {item.programer}
+                </div>
               </div>
           ))}
         </div>
@@ -580,6 +650,9 @@ const isTaskTooLongInPhase = (dateMoved) => {
               style={{ backgroundColor: integriran[index].color, border: `solid ${isTaskTooLongInPhase(item.moveDateIntegriran)}` }}>
                 <div id='naslov-zadatka'>
                   {item.naslov}
+                </div>
+                <div id='vlasnikZadatka'>
+                  P: {item.programer}, T: {item.tester}
                 </div>
               </div>
           ))}

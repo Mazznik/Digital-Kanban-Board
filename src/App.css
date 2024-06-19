@@ -154,11 +154,48 @@
 }
 
 #naslov-zadatka{
-  margin-right: 33px;
-  margin-left: 3px;
-  margin-top: 3px;
+  margin-right: 3px;
+  margin-left: 2px;
+  margin-top: 2px;
   margin-bottom: 3px;
   font-family:'Times New Roman', Times, serif;
-  text-align: justify;
+  text-align: start;
   color: white;
+}
+
+#logoutButton{
+  position: absolute;
+  top: 10px;  
+  right: 10px;  
+  padding: 10px 20px; 
+  background-color: gray;  
+  color: white;  
+  border: 2px black solid;  
+  border-radius: 5px;  
+  cursor: pointer; 
+}
+
+#logoutButton:hover {
+  opacity: 0.8;
+}
+
+#vlasnikZadatka{
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  margin-bottom: 2px;
+  margin-left: 2px;
+  color: white;
+  font-size: small;
+}
+
+#imeUsera{
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 5px;
+  margin-top: 30px;
+  color: black;  
+  font-size: 20px;
+  font-weight: bold;
 }

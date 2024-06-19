@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import './login.css';
 import {  signInWithEmailAndPassword   } from 'firebase/auth';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import { doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 function Login(){
@@ -10,14 +11,24 @@ function Login(){
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+        .then(
+             async (userCredential) => {
             // Signed in
             const user = userCredential.user;
+
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+            
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const userName = userData.name
+
+                alert("Welcome " + userName)
+            }
             navigate("/app")
-            alert(user.email);
         })
         .catch((error) => {
             alert("Pogreška prilikom prijave.");

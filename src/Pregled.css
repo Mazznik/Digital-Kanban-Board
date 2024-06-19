@@ -18,4 +18,20 @@
   #headers{
     font-style: italic;
   }
+
+  #kanbanButton{
+    position: absolute;
+    top: 10px;  
+    left: 10px;  
+    padding: 10px 20px; 
+    background-color: gray;  
+    color: white;  
+    border: 2px black solid;  
+    border-radius: 5px;  
+    cursor: pointer; 
+  }
+  
+  #kanbanButton:hover {
+    opacity: 0.8;
+  }
   

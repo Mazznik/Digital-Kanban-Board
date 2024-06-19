@@ -4,10 +4,14 @@ import App from './App';
 import Login from './login';
 import Pregled from './Pregled';
 import { auth } from './firebase';
+import useAuth from './useAuth';
 
 function ProtectedRoute({ element, ...rest }) {
-  // Provjeravamo autentikaciju korisnika
-  const isAuthenticated = auth.currentUser !== null;
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>; // Možeš prikazati neki loader dok se provjerava autentikacija
+  }
 
   return isAuthenticated ? (
     element
@@ -22,6 +26,7 @@ function AppRouter() {
       <Route path="/login" element={<Login />} />
       <Route path="/app" element={<ProtectedRoute element={<App />} />} />
       <Route path='/pregled' element={<Pregled />} />
+      <Route path="/" element={<Navigate to="/login" />} />
     </Routes>
   );
 }
