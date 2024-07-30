@@ -97,7 +97,13 @@ function App() {
   }
  
   const handleButtonClick = () => {
-    setShowInput(true);
+    if(userRole === "project manager"){
+      setShowInput(true);
+    }
+    else{
+      alert("Ovlasti: project manager!")
+      return;
+    }
   };
 
   const handleInputSubmit = async (pickedColor, role) => {
@@ -137,130 +143,19 @@ const handleDrop = async(event, targetColumn) => {
   const data = JSON.parse(event.dataTransfer.getData("text/plain"));
   const { column, index } = data;
 
-  if (column === "ideja" && targetColumn === "izrada") {
-    alert("You can't drag to Izrada")
-    return; 
-  }
-
-  if (column === "ideja" && targetColumn === "test") {
-    alert("You can't drag to Test")
-    return; 
-  }
-
-  if (column === "ideja" && targetColumn === "integriran") {
-    alert("You can't drag to Integriran")
-    return; 
-  }
-
-  if (column === "ideja" && targetColumn === "gotov") {
-    alert("You can't drag to Gotov")
-    return; 
-  }
-
-  if (column === "plan" && targetColumn === "ideja") {
-    alert("You can't return to Ideja")
-    return; 
-  }
-
-  if (column === "plan" && targetColumn === "test") {
-    alert("You can't drag to Test")
-    return; 
-  }
-
-  if (column === "plan" && targetColumn === "integriran") {
-    alert("You can't drag to Integriran")
-    return; 
-  }
-
-  if (column === "plan" && targetColumn === "gotov") {
-    alert("You can't drag to Gotov")
-    return; 
-  }
-
-  if (column === "izrada" && targetColumn === "ideja") {
-    alert("You can't drag to Ideja")
-    return; 
-  }
-
-  if (column === "izrada" && targetColumn === "plan") {
-    alert("You can't drag to Plan")
-    return; 
-  }
-
-  if (column === "izrada" && targetColumn === "integriran") {
-    alert("You can't drag to Integriran")
-    return; 
-  }
-
-  if (column === "izrada" && targetColumn === "gotov") {
-    alert("You can't drag to Gotov")
-    return; 
-  }
-
-  if (column === "test" && targetColumn === "ideja") {
-    alert("You can't drag to Ideja")
-    return; 
-  }
-
-  if (column === "test" && targetColumn === "plan") {
-    alert("You can't drag to Plan")
-    return; 
-  }
-
-  if (column === "test" && targetColumn === "izrada") {
-    alert("You can't drag to Izrada")
-    return; 
-  }
-
-  if (column === "test" && targetColumn === "gotov") {
-    alert("You can't drag to Gotov")
-    return; 
-  }
-
-  if (column === "integriran" && targetColumn === "ideja") {
-    alert("You can't drag to Ideja")
-    return; 
-  }
-
-  if (column === "integriran" && targetColumn === "plan") {
-    alert("You can't drag to Plan")
-    return; 
-  }
-
-  if (column === "integriran" && targetColumn === "izrada") {
-    alert("You can't drag to Izrada")
-    return; 
-  }
-
-  if (column === "integriran" && targetColumn === "test") {
-    alert("You can't drag to Test")
-    return; 
-  }
-
-  if (column === "gotov" && targetColumn === "ideja") {
-    alert("You can't drag to Ideja")
-    return; 
-  }
-
-  if (column === "gotov" && targetColumn === "plan") {
-    alert("You can't drag to Plan")
-    return; 
-  }
-
-  if (column === "gotov" && targetColumn === "izrada") {
-    alert("You can't drag to Izrada")
-    return; 
-  }
-
-  if (column === "gotov" && targetColumn === "test") {
-    alert("You can't drag to Test")
-    return; 
-  }
-
-  if (column === "gotov" && targetColumn === "integriran") {
-    alert("You can't drag to Integriran")
-    return; 
-  }
+  const restrictions = {
+    ideja: ["izrada", "test", "integriran", "gotov"],
+    plan: ["ideja", "test", "integriran", "gotov"],
+    izrada: ["ideja", "plan", "integriran", "gotov"],
+    test: ["ideja", "plan", "izrada", "gotov"],
+    integriran: ["ideja", "plan", "izrada", "test"],
+    gotov: ["ideja", "plan", "izrada", "test", "integriran"]
+  };
+  
+  if (restrictions[column] && restrictions[column].includes(targetColumn)) {
+    alert(`You can't drag to ${targetColumn.charAt(0).toUpperCase() + targetColumn.slice(1)}`);
+    return;
+  }  
 
   // Provjerite je li broj kvadrata u odredišnom stupcu manji od maksimalnog dopuštenog
   const numSquaresInTargetColumn =
@@ -456,19 +351,6 @@ const handleDrop = async(event, targetColumn) => {
           return;
         }
           break;
-
-        /*case "gotov":
-          const draggedGotov = gotov[index];
-          setGotov(gotov.filter((_, i) => i !== index));
-          switch (targetColumn) {
-            case "gotov":
-              setGotov([...gotov, draggedGotov])
-              break;
-            default:
-              break;
-          } 
-          break; */
-
         default:
           break;
       }
@@ -505,7 +387,7 @@ const handleLogout = () => {
 
   return (
     <div className='app'>
-      <button id = "logoutButton" onClick={handleLogout}>Logout</button>
+      <button id = "logoutButton" onClick={handleLogout}>Odjava</button>
       <div><p id='imeUsera'>Korisnik: {userName} ({userRole})</p></div>
       <div className='column'>
         <h2 id='header'>Ideja</h2>

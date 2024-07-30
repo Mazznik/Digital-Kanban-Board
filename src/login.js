@@ -26,7 +26,7 @@ function Login(){
                 const userData = userDoc.data();
                 const userName = userData.name
 
-                alert("Welcome " + userName)
+                alert("Dobrodošao " + userName)
             }
             navigate("/app")
         })
@@ -38,10 +38,10 @@ function Login(){
     return(
         <div className="login">
             <div className="login-container">
-                <h2 id="header2">Login</h2>
+                <h2 id="header2">Prijava</h2>
                 <form>
                     <div className="form-group">
-                        <label htmlFor="email" style={{ display:"block", marginBottom: "5px" }}>Username:</label>
+                        <label htmlFor="email" style={{ display:"block", marginBottom: "5px" }}>Email:</label>
                         <input
                             type="text"
                             id="username"
@@ -52,7 +52,7 @@ function Login(){
                         />
                     </div>
                     <div className="form-group">
-                        <label htmlFor="password" style={{ display:"block", marginBottom: "5px" }}>Password:</label>
+                        <label htmlFor="password" style={{ display:"block", marginBottom: "5px" }}>Lozinka:</label>
                         <input
                             type="password"
                             id="password"
@@ -62,7 +62,7 @@ function Login(){
                             required
                         />
                     </div>
-                    <button onClick={handleLogin} className="button-login">Login</button>
+                    <button onClick={handleLogin} className="button-login">Prijava</button>
                 </form>
             </div>
         </div>
