@@ -178,7 +178,7 @@ const handleDrop = async(event, targetColumn) => {
       switch (column) {
         case "ideja":
           const draggedIdeja = ideja[index];
-          if(userRole === "programer" || userRole === "project manager"){
+          if(userRole === "programer"){
             try {
               // Brišemo objekt iz kolekcije "ideja"
               await deleteDoc(doc(db, "ideja", draggedIdeja.id));
@@ -284,7 +284,7 @@ const handleDrop = async(event, targetColumn) => {
 
         case "test":
           const draggedTest = test[index];
-          if(userRole === "tester" || userRole === "project manager"){
+          if(userRole === "tester"){
             try {
               await deleteDoc(doc(db, "test", draggedTest.id));
               console.log("Dokument uspješno obrisan iz kolekcije 'test'.");
@@ -390,7 +390,7 @@ const handleLogout = () => {
       <button id = "logoutButton" onClick={handleLogout}>Odjava</button>
       <div><p id='imeUsera'>Korisnik: {userName} ({userRole})</p></div>
       <div className='column'>
-        <h2 id='header'>Ideja</h2>
+        <h2 id='header'>Ideja ({ideja.length}/{MAX_SQUARES_PER_COLUMN})</h2>
         <div className='ideja'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "ideja")}>
@@ -449,7 +449,7 @@ const handleLogout = () => {
       </div>
 
       <div className='column'>
-        <h2 id='header'>Plan</h2>
+        <h2 id='header'>Plan ({plan.length}/{MAX_SQUARES_PER_COLUMN})</h2>
         <div className='plan'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "plan")}>
@@ -473,7 +473,7 @@ const handleLogout = () => {
       </div>
 
       <div className='column'>
-        <h2 id='header'>Izrada</h2>
+        <h2 id='header'>Izrada ({izrada.length}/{MAX_SQUARES_PER_COLUMN})</h2>
         <div className='izrada'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "izrada")}>
@@ -496,7 +496,7 @@ const handleLogout = () => {
       </div>
 
       <div className='column'>
-        <h2 id='header'>Test</h2>
+        <h2 id='header'>Test ({test.length}/{MAX_SQUARES_PER_COLUMN})</h2>
         <div className='test'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "test")}>
@@ -519,7 +519,7 @@ const handleLogout = () => {
       </div>
 
       <div className='column'>
-        <h2 id='header'>Integriran</h2>
+        <h2 id='header'>Integriran ({integriran.length}/{MAX_SQUARES_PER_COLUMN})</h2>
         <div className='integriran'
           onDragOver={(event) => handleDragOver(event)}
           onDrop={(event) => handleDrop(event, "integriran")}>
