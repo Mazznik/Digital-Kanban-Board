@@ -131,7 +131,7 @@
   margin-bottom: 0px;
   width: 170px;
   height: 65px;
-  cursor: pointer;
+  cursor: grab;
   position: relative;
 }
 
